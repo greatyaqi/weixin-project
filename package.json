@@ -1,0 +1,12 @@
+{
+  "name": "application-name",
+  "version": "0.0.1",
+  "engines": {
+    "node": "6.7.0",
+    "npm": "3.10.3"
+  },
+  "dependencies": {
+    "koa": "^1.2.4",
+    "sha1": "^1.1.1"
+  }
+}
