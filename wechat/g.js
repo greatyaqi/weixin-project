@@ -6,12 +6,13 @@
 var sha1 = require('sha1')
 var getRawBody = require('raw-body')
 var Wechat = require('./wechat')
+var util = require('./util')
 var Promise = require('bluebird')
 var request =Promise.promisify(require('request'))
 
 
 module.exports = function (opts) {
-    var wechat = new Wechat(opts)
+   // var wechat = new Wechat(opts)
     return function *(next) {
         var token = opts.token
         var signature = this.query.signature
@@ -30,13 +31,35 @@ module.exports = function (opts) {
         }
        else if (this.method ==='POST'){
             if (sha === signature) {
+                var that = this
                 this.body = echostr + ''
-                var data = yield  getRawBody(this.req,{
+                var data= yield  getRawBody(this.req,{
                    /* length: this.length,
                     limit: '1mb',
                     encoding: this.charset*/
                 })
-                console.log(data.toString())
+                console.log(data)
+
+                var content = yield util.parseXMLAsync(data)
+                console.log(content)
+                var messsage = util.formatMessage(content.xml)
+                console.log(messsage)
+
+                if (messsage.MsgType === 'event'){
+                    if (messsage.Event === 'subscribe'){
+                        var now = new Date().getTime()
+
+                        that.status = 200
+                        that.type = 'application/xml'
+                        that.body = '<xml>'+
+                            '<ToUserName><![CDATA['+messsage.FromUserName+']]></ToUserName>'+
+                            '<FromUserName><![CDATA['+messsage.ToUserName+']]></FromUserName>'+
+                            '<CreateTime>'+now+'</CreateTime>'+
+                            '<MsgType><![CDATA[text]]></MsgType>'+
+                            '<Content><![CDATA[我好饿！]]></Content>'+
+                            '</xml>'
+                    }
+                }
             } else {
                 this.body = 'wrong!'
                 return false
